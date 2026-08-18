@@ -1,0 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-family: Cairo, system-ui, sans-serif; background:#F6F8F5; color:#16221B; }
+button, input, select, textarea { font-family: inherit; }
+button { touch-action: manipulation; }
+input:focus, select:focus, textarea:focus { outline: 2px solid #0B6B43; outline-offset: 1px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: #C8D1CA; border-radius: 10px; }

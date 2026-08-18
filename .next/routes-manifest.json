@@ -1,0 +1,132 @@
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/api/auth/[...nextauth]",
+      "regex": "^/api/auth/(.+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPnextauth": "nxtPnextauth"
+      },
+      "namedRegex": "^/api/auth/(?<nxtPnextauth>.+?)(?:/)?$"
+    },
+    {
+      "page": "/api/customer/orders/[id]",
+      "regex": "^/api/customer/orders/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/customer/orders/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/customer/orders/[id]",
+      "regex": "^/customer/orders/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/customer/orders/(?<nxtPid>[^/]+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/customer/login",
+      "regex": "^/customer/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/customer/login(?:/)?$"
+    },
+    {
+      "page": "/customer/orders",
+      "regex": "^/customer/orders(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/customer/orders(?:/)?$"
+    },
+    {
+      "page": "/customer/profile",
+      "regex": "^/customer/profile(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/customer/profile(?:/)?$"
+    },
+    {
+      "page": "/customer/register",
+      "regex": "^/customer/register(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/customer/register(?:/)?$"
+    },
+    {
+      "page": "/customer/reset-password",
+      "regex": "^/customer/reset\\-password(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/customer/reset\\-password(?:/)?$"
+    },
+    {
+      "page": "/seller/dashboard",
+      "regex": "^/seller/dashboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/seller/dashboard(?:/)?$"
+    },
+    {
+      "page": "/seller/login",
+      "regex": "^/seller/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/seller/login(?:/)?$"
+    },
+    {
+      "page": "/seller/register",
+      "regex": "^/seller/register(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/seller/register(?:/)?$"
+    },
+    {
+      "page": "/seller/reset-password",
+      "regex": "^/seller/reset\\-password(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/seller/reset\\-password(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments"
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}
