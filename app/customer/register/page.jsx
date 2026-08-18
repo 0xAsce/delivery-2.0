@@ -1,281 +1,334 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-function formatPrice(value) {
-  return `${Number(value || 0).toLocaleString("en-DZ")} DA`;
-}
+const WILAYAS = [
+  "Adrar",
+  "Chlef",
+  "Laghouat",
+  "Oum El Bouaghi",
+  "Batna",
+  "Béjaïa",
+  "Biskra",
+  "Béchar",
+  "Blida",
+  "Bouira",
+  "Tamanrasset",
+  "Tébessa",
+  "Tlemcen",
+  "Tiaret",
+  "Tizi Ouzou",
+  "Alger",
+  "Djelfa",
+  "Jijel",
+  "Sétif",
+  "Saïda",
+  "Skikda",
+  "Sidi Bel Abbès",
+  "Annaba",
+  "Guelma",
+  "Constantine",
+  "Médéa",
+  "Mostaganem",
+  "M'Sila",
+  "Mascara",
+  "Ouargla",
+  "Oran",
+  "El Bayadh",
+  "Illizi",
+  "Bordj Bou Arréridj",
+  "Boumerdès",
+  "El Tarf",
+  "Tindouf",
+  "Tissemsilt",
+  "El Oued",
+  "Khenchela",
+  "Souk Ahras",
+  "Tipaza",
+  "Mila",
+  "Aïn Defla",
+  "Naâma",
+  "Aïn Témouchent",
+  "Ghardaïa",
+  "Relizane",
+  "Timimoun",
+  "Bordj Badji Mokhtar",
+  "Ouled Djellal",
+  "Béni Abbès",
+  "In Salah",
+  "In Guezzam",
+  "Touggourt",
+  "Djanet",
+  "El M'Ghair",
+  "El Meniaa",
+];
 
-function statusClass(status) {
-  switch (status) {
-    case "PENDING":
-      return "bg-yellow-100 text-yellow-800";
-
-    case "CONFIRMED":
-      return "bg-blue-100 text-blue-800";
-
-    case "PROCESSING":
-      return "bg-purple-100 text-purple-800";
-
-    case "SHIPPED":
-      return "bg-indigo-100 text-indigo-800";
-
-    case "DELIVERED":
-      return "bg-green-100 text-green-800";
-
-    case "CANCELLED":
-      return "bg-red-100 text-red-800";
-
-    default:
-      return "bg-gray-100 text-gray-700";
-  }
-}
-
-export default function CustomerOrdersPage() {
+export default function CustomerRegister() {
   const router = useRouter();
 
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+    wilaya: "",
+    city: "",
+    address: "",
+  });
+
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  async function loadOrders() {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await fetch(
-        "/api/customer/orders",
-        {
-          cache: "no-store",
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          router.push("/customer/login");
-          return;
-        }
-
-        throw new Error(
-          data?.error || "Failed to load orders."
-        );
-      }
-
-      setOrders(Array.isArray(data) ? data : data.orders || []);
-    } catch (err) {
-      console.error(err);
-
-      setError(
-        err.message || "Failed to load your orders."
-      );
-    } finally {
-      setLoading(false);
-    }
+  function updateField(field, value) {
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
   }
 
-  useEffect(() => {
-    loadOrders();
-  }, []);
+  async function submit(e) {
+    e.preventDefault();
+    setError("");
 
-  async function deleteOrder(orderId) {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this order?"
-    );
+    if (form.password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
 
-    if (!confirmed) return;
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (!form.wilaya) {
+      setError("Please select your wilaya.");
+      return;
+    }
+
+    if (form.city.trim().length < 2) {
+      setError("Please enter your city.");
+      return;
+    }
+
+    setBusy(true);
 
     try {
-      const response = await fetch(
-        `/api/customer/orders/${orderId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch("/api/customer/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          phone: form.phone.trim(),
+          password: form.password,
+          wilaya: form.wilaya,
+          city: form.city.trim(),
+          address: form.address.trim(),
+        }),
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data?.error || "Failed to delete order."
+        setError(
+          data?.error || "Unable to create your account."
         );
+        return;
       }
 
-      setOrders((current) =>
-        current.filter(
-          (order) => order.id !== orderId
-        )
-      );
+      // Registration automatically creates the customer session.
+      router.replace("/customer/profile");
     } catch (err) {
       console.error(err);
-
-      alert(
-        err.message || "Failed to delete order."
-      );
+      setError("Unable to connect to the server.");
+    } finally {
+      setBusy(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f8f4] p-4">
-      <div className="max-w-4xl mx-auto py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-black">
-              My Orders
-            </h1>
+    <main className="min-h-screen bg-[#f7f8f4] p-4 flex items-center justify-center">
+      <form
+        onSubmit={submit}
+        className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-200 space-y-4"
+      >
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black">
+            Create your account
+          </h1>
 
-            <p className="text-gray-500 mt-1">
-              View and manage your orders.
-            </p>
-          </div>
-
-          <Link
-            href="/"
-            className="rounded-xl bg-black text-white px-4 py-3 font-bold"
-          >
-            Shop
-          </Link>
+          <p className="text-gray-500 mt-1">
+            Register with your phone number and delivery information.
+          </p>
         </div>
 
         {error && (
-          <div className="rounded-2xl bg-red-50 text-red-700 p-4 mb-5">
+          <div className="rounded-xl bg-red-50 text-red-700 p-3 text-sm">
             {error}
           </div>
         )}
 
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((item) => (
-              <div
-                key={item}
-                className="bg-white rounded-3xl border border-gray-200 p-6 animate-pulse"
-              >
-                <div className="h-5 bg-gray-200 rounded w-1/3" />
-                <div className="h-4 bg-gray-200 rounded w-1/2 mt-3" />
-                <div className="h-10 bg-gray-200 rounded mt-6" />
-              </div>
-            ))}
+        <div>
+          <label className="block text-sm font-bold mb-1">
+            Name
+          </label>
+
+          <input
+            required
+            value={form.name}
+            onChange={(e) =>
+              updateField("name", e.target.value)
+            }
+            placeholder="Your full name"
+            maxLength={100}
+            className="w-full rounded-xl border border-gray-300 p-3 outline-none focus:ring-2 focus:ring-black"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold mb-1">
+            Phone number
+          </label>
+
+          <input
+            required
+            value={form.phone}
+            onChange={(e) =>
+              updateField("phone", e.target.value)
+            }
+            placeholder="05XXXXXXXX"
+            inputMode="tel"
+            autoComplete="tel"
+            className="w-full rounded-xl border border-gray-300 p-3 outline-none focus:ring-2 focus:ring-black"
+          />
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-bold mb-1">
+              Password
+            </label>
+
+            <input
+              required
+              type="password"
+              value={form.password}
+              onChange={(e) =>
+                updateField("password", e.target.value)
+              }
+              placeholder="At least 8 characters"
+              minLength={8}
+              autoComplete="new-password"
+              className="w-full rounded-xl border border-gray-300 p-3 outline-none focus:ring-2 focus:ring-black"
+            />
           </div>
-        ) : orders.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-gray-200 p-10 text-center">
-            <h2 className="text-xl font-black">
-              No orders yet
-            </h2>
 
-            <p className="text-gray-500 mt-2">
-              Your orders will appear here.
-            </p>
+          <div>
+            <label className="block text-sm font-bold mb-1">
+              Confirm password
+            </label>
 
-            <Link
-              href="/"
-              className="inline-block mt-5 rounded-xl bg-black text-white px-5 py-3 font-bold"
+            <input
+              required
+              type="password"
+              value={form.confirmPassword}
+              onChange={(e) =>
+                updateField(
+                  "confirmPassword",
+                  e.target.value
+                )
+              }
+              placeholder="Repeat password"
+              minLength={8}
+              autoComplete="new-password"
+              className="w-full rounded-xl border border-gray-300 p-3 outline-none focus:ring-2 focus:ring-black"
+            />
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-bold mb-1">
+              Wilaya
+            </label>
+
+            <select
+              required
+              value={form.wilaya}
+              onChange={(e) =>
+                updateField("wilaya", e.target.value)
+              }
+              className="w-full rounded-xl border border-gray-300 p-3 bg-white outline-none focus:ring-2 focus:ring-black"
             >
-              Start shopping
-            </Link>
+              <option value="">Select wilaya</option>
+
+              {WILAYAS.map((wilaya) => (
+                <option key={wilaya} value={wilaya}>
+                  {wilaya}
+                </option>
+              ))}
+            </select>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {orders.map((order) => {
-              const firstItem = order.items?.[0];
 
-              const itemCount =
-                order.items?.reduce(
-                  (sum, item) =>
-                    sum + Number(item.quantity || 0),
-                  0
-                ) || 0;
+          <div>
+            <label className="block text-sm font-bold mb-1">
+              City
+            </label>
 
-              return (
-                <div
-                  key={order.id}
-                  className="bg-white rounded-3xl border border-gray-200 p-5 shadow-sm"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div>
-                      <p className="text-xs text-gray-400 font-bold uppercase">
-                        Order
-                      </p>
-
-                      <h2 className="font-black text-lg break-all">
-                        #{order.id}
-                      </h2>
-
-                      <p className="text-sm text-gray-500 mt-1">
-                        {new Date(
-                          order.createdAt
-                        ).toLocaleString("en-DZ")}
-                      </p>
-                    </div>
-
-                    <span
-                      className={`w-fit rounded-full px-3 py-1.5 text-xs font-bold ${statusClass(
-                        order.status
-                      )}`}
-                    >
-                      {order.status}
-                    </span>
-                  </div>
-
-                  <div className="mt-5 rounded-2xl bg-gray-50 p-4">
-                    <div className="flex justify-between gap-4">
-                      <div>
-                        <p className="font-bold">
-                          {firstItem?.name ||
-                            "Order items"}
-                        </p>
-
-                        <p className="text-sm text-gray-500 mt-1">
-                          {itemCount} item
-                          {itemCount === 1
-                            ? ""
-                            : "s"}
-                        </p>
-                      </div>
-
-                      <p className="font-black whitespace-nowrap">
-                        {formatPrice(order.total)}
-                      </p>
-                    </div>
-
-                    {order.deliveryMethod && (
-                      <p className="text-sm text-gray-500 mt-3">
-                        Delivery:{" "}
-                        <span className="font-semibold text-gray-700">
-                          {order.deliveryMethod}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                    <Link
-                      href={`/customer/orders/${order.id}`}
-                      className="flex-1 text-center rounded-xl bg-black text-white px-4 py-3 font-bold"
-                    >
-                      View order
-                    </Link>
-
-                    {order.status === "PENDING" && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          deleteOrder(order.id)
-                        }
-                        className="rounded-xl border border-red-200 text-red-600 px-4 py-3 font-bold hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            <input
+              required
+              value={form.city}
+              onChange={(e) =>
+                updateField("city", e.target.value)
+              }
+              placeholder="Your city"
+              maxLength={100}
+              className="w-full rounded-xl border border-gray-300 p-3 outline-none focus:ring-2 focus:ring-black"
+            />
           </div>
-        )}
-      </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold mb-1">
+            Address{" "}
+            <span className="text-gray-400 font-normal">
+              (optional)
+            </span>
+          </label>
+
+          <textarea
+            value={form.address}
+            onChange={(e) =>
+              updateField("address", e.target.value)
+            }
+            placeholder="Your delivery address"
+            maxLength={300}
+            rows={3}
+            className="w-full rounded-xl border border-gray-300 p-3 outline-none focus:ring-2 focus:ring-black resize-none"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={busy}
+          className="w-full rounded-xl bg-black text-white p-3 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {busy ? "Creating account…" : "Create account"}
+        </button>
+
+        <p className="text-sm text-center text-gray-600">
+          Already have an account?{" "}
+          <Link
+            href="/customer/login"
+            className="underline font-bold text-black"
+          >
+            Log in
+          </Link>
+        </p>
+      </form>
     </main>
   );
 }
