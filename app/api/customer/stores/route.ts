@@ -15,7 +15,10 @@ export async function GET() {
 
     if (!customer.wilaya || !customer.city) {
       return NextResponse.json(
-        { error: "Customer location is not set" },
+        {
+          error:
+            "Your account does not have a Wilaya and Baladia.",
+        },
         { status: 400 }
       );
     }
@@ -23,12 +26,14 @@ export async function GET() {
     const stores = await db.store.findMany({
       where: {
         status: "OPEN",
+
         user: {
           role: "SELLER",
           wilaya: customer.wilaya,
           city: customer.city,
         },
       },
+
       include: {
         user: {
           select: {
@@ -39,6 +44,7 @@ export async function GET() {
           },
         },
       },
+
       orderBy: {
         name: "asc",
       },
@@ -55,7 +61,7 @@ export async function GET() {
     console.error("customer stores", error);
 
     return NextResponse.json(
-      { error: "Unable to load stores" },
+      { error: "Unable to load stores." },
       { status: 500 }
     );
   }

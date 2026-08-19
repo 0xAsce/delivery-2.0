@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CATEGORY_LIST, DEFAULT_CATALOG, C } from "@/lib/data";
+import { CATEGORY_LIST, C } from "@/lib/data";
 
 const categoryNames = { boissons: "مشروبات", epicerie: "بقالة", hygiene: "نظافة", snacks: "وجبات خفيفة" };
 const statusNames = { PENDING: "قيد الانتظار", CONFIRMED: "تم التأكيد", OUT_FOR_DELIVERY: "في الطريق", DELIVERED: "تم التوصيل", CANCELLED: "ملغى" };
@@ -9,7 +9,9 @@ const statusNames = { PENDING: "قيد الانتظار", CONFIRMED: "تم ال�
 export default function Page() {
   const [user, setUser] = useState(null);
   const [loaded, setLoaded] = useState(false);
-  const [products] = useState(DEFAULT_CATALOG);
+  const [products, setProducts] = useState([]);
+const [store, setStore] = useState(null);
+const [hasSeller, setHasSeller] = useState(false);
   const [cart, setCart] = useState({});
   const [category, setCategory] = useState("all");
   const [search, setSearch] = useState("");
@@ -18,11 +20,70 @@ export default function Page() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/customer/me").then(r => r.ok ? r.json() : null),
-      fetch("/api/customer/orders").then(r => r.ok ? r.json() : { orders: [] }),
-    ]).then(([me, history]) => { setUser(me?.user || null); setOrders(history.orders || []); setLoaded(true); });
-  }, []);
+  async function load() {
+    try {
+      const meResponse = await fetch(
+        "/api/customer/me",
+        {
+          cache: "no-store",
+        }
+      );
+
+      const me =
+        meResponse.ok
+          ? await meResponse.json()
+          : null;
+
+      const historyResponse = await fetch(
+        "/api/customer/orders",
+        {
+          cache: "no-store",
+        }
+      );
+
+      const history =
+        historyResponse.ok
+          ? await historyResponse.json()
+          : { orders: [] };
+
+      setUser(me?.user || null);
+      setOrders(history.orders || []);
+
+      if (me?.user) {
+        const productsResponse =
+          await fetch(
+            "/api/customer/main-seller/products",
+            {
+              cache: "no-store",
+            }
+          );
+
+        if (productsResponse.ok) {
+          const productsData =
+            await productsResponse.json();
+
+          setProducts(
+            productsData.products || []
+          );
+
+          setStore(
+            productsData.store || null
+          );
+
+          setHasSeller(
+            !!productsData.hasSeller
+          );
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoaded(true);
+    }
+  }
+
+  load();
+}, []);
 
   const filtered = useMemo(() => products.filter(p => (category === "all" || p.category === category) && p.name.toLowerCase().includes(search.toLowerCase())), [products, category, search]);
   const cartItems = Object.entries(cart).map(([id, qty]) => { const p = products.find(x => x.id === id); return p ? { ...p, qty } : null; }).filter(Boolean);
@@ -66,7 +127,69 @@ const d = await r.json();
         </div>
       </div>
     </header>
+{user && hasSeller && store && (
+  <section className="bg-white rounded-3xl border border-gray-200 p-5">
+    <div className="flex items-center gap-4">
+      {store.logo ? (
+        <img
+          src={store.logo}
+          alt={store.name}
+          className="w-16 h-16 rounded-2xl object-cover"
+        />
+      ) : (
+        <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center text-3xl">
+          🏪
+        </div>
+      )}
 
+      <div className="flex-1">
+        <p className="text-sm text-gray-500">
+          حانوتك الرئيسي
+        </p>
+
+        <h2 className="text-xl font-black">
+          {store.name}
+        </h2>
+
+        {store.description && (
+          <p className="text-sm text-gray-500 mt-1">
+            {store.description}
+          </p>
+        )}
+      </div>
+
+      <Link
+        href="/customer/select-seller"
+        className="rounded-xl border px-3 py-2 text-sm font-bold"
+      >
+        تغيير
+      </Link>
+    </div>
+  </section>
+)}
+{user && !hasSeller && (
+  <section className="bg-white rounded-3xl border border-gray-200 p-6 text-center">
+    <div className="text-5xl mb-3">
+      🏪
+    </div>
+
+    <h2 className="text-xl font-black">
+      اختر حانوتك للبدء
+    </h2>
+
+    <p className="text-gray-500 mt-2">
+      اختر البائع الرئيسي في منطقتك
+      لمشاهدة منتجاته وطلبها.
+    </p>
+
+    <Link
+      href="/customer/select-seller"
+      className="inline-block mt-5 rounded-xl bg-black text-white px-6 py-3 font-black"
+    >
+      اختيار الحانوت
+    </Link>
+  </section>
+)}
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
       <section className="rounded-3xl p-6 md:p-8 text-white" style={{ background: `linear-gradient(135deg, ${C.primaryDark}, ${C.primary})` }}>
         <p className="text-sm opacity-80">التسوق السريع</p><h1 className="text-3xl md:text-4xl font-black mt-2">اطلب منتجاتك بسهولة</h1><p className="mt-2 opacity-90">تصفح المنتجات، أضفها للسلة، وتابع طلبك حتى التوصيل.</p>

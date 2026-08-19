@@ -1,9 +1,19 @@
-export const WILAYAS = [
-  "Adrar","Chlef","Laghouat","Oum El Bouaghi","Batna","Béjaïa","Biskra","Béchar","Blida","Bouira","Tamanrasset","Tébessa","Tlemcen","Tiaret","Tizi Ouzou","Alger","Djelfa","Jijel","Sétif","Saïda","Skikda","Sidi Bel Abbès","Annaba","Guelma","Constantine","Médéa","Mostaganem","M'Sila","Mascara","Ouargla","Oran","El Bayadh","Illizi","Bordj Bou Arréridj","Boumerdès","El Tarf","Tindouf","Tissemsilt","El Oued","Khenchela","Souk Ahras","Tipaza","Mila","Aïn Defla","Naâma","Aïn Témouchent","Ghardaïa","Relizane","Timimoun","Bordj Badji Mokhtar","Ouled Djellal","Béni Abbès","In Salah","In Guezzam","Touggourt","Djanet","El M'Ghair","El Meniaa",
-] as const;
+import { getWilayas } from "./locations";
 
-export type Wilaya = (typeof WILAYAS)[number];
+export const WILAYAS = getWilayas().map(
+  (wilaya) => wilaya.name
+);
 
-export function isValidWilaya(value: unknown): value is Wilaya {
-  return typeof value === "string" && (WILAYAS as readonly string[]).includes(value);
+export type Wilaya =
+  (typeof WILAYAS)[number];
+
+export function isValidWilaya(
+  value: unknown
+): value is Wilaya {
+  return (
+    typeof value === "string" &&
+    WILAYAS.includes(
+      value as Wilaya
+    )
+  );
 }

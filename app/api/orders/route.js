@@ -4,40 +4,206 @@ import { getCustomer } from "@/lib/customer-auth";
 
 export async function POST(request) {
   const customer = await getCustomer();
-  if (!customer) return NextResponse.json({ error: "Login required" }, { status: 401 });
+
+  if (!customer) {
+    return NextResponse.json(
+      { error: "Login required" },
+      { status: 401 }
+    );
+  }
 
   try {
     const body = await request.json();
-    if (!Array.isArray(body?.items) || !body.items.length) {
-      return NextResponse.json({ error: "items are required" }, { status: 400 });
+
+    if (!body.shopId) {
+      return NextResponse.json(
+        { error: "A store must be selected." },
+        { status: 400 }
+      );
     }
-    const items = body.items.map((item) => ({
-      productId: item.id ? String(item.id) : null,
-      name: String(item.name || "").trim(),
-      unit: item.unit ? String(item.unit) : null,
-      price: Number(item.price),
-      quantity: Math.max(1, Number(item.qty || item.quantity) || 0),
-    }));
-    if (items.some((x) => !x.name || !Number.isFinite(x.price) || x.price < 0 || x.quantity < 1)) {
-      return NextResponse.json({ error: "Invalid order items" }, { status: 400 });
+
+    if (
+      !Array.isArray(body?.items) ||
+      !body.items.length
+    ) {
+      return NextResponse.json(
+        { error: "items are required" },
+        { status: 400 }
+      );
     }
-    const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const order = await db.customerOrder.create({
-      data: {
-        customerId: customer.id,
-        shopId: body.shopId ? String(body.shopId) : null,
-        total,
-        note: body.note ? String(body.note).slice(0, 1000) : null,
-        wilaya: customer.wilaya,
-        city: customer.city,
-        address: customer.address,
-        items: { create: items },
+
+    const shopId = String(body.shopId);
+
+    // Make sure the customer can actually order
+    // from this store.
+    const store = await db.store.findFirst({
+      where: {
+        id: shopId,
+        status: "OPEN",
+
+        user: {
+          role: "SELLER",
+          wilaya: customer.wilaya,
+          city: customer.city,
+        },
       },
-      include: { items: true },
     });
-    return NextResponse.json({ order }, { status: 201 });
+
+    if (!store) {
+      return NextResponse.json(
+        {
+          error:
+            "This store is not available in your area.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const requestedItems = body.items.map(
+      (item) => ({
+        productId: item.id
+          ? String(item.id)
+          : null,
+
+        quantity: Math.max(
+          1,
+          Number(
+            item.qty || item.quantity
+          ) || 0
+        ),
+      })
+    );
+
+    if (
+      requestedItems.some(
+        (item) =>
+          !item.productId ||
+          item.quantity < 1
+      )
+    ) {
+      return NextResponse.json(
+        { error: "Invalid order items" },
+        { status: 400 }
+      );
+    }
+
+    const productIds =
+      requestedItems.map(
+        (item) => item.productId
+      );
+
+    const products =
+      await db.product.findMany({
+        where: {
+          id: {
+            in: productIds,
+          },
+
+          storeId: shopId,
+
+          isHidden: false,
+        },
+
+        include: {
+          images: {
+            orderBy: {
+              sortOrder: "asc",
+            },
+            take: 1,
+          },
+        },
+      });
+
+    if (products.length !== productIds.length) {
+      return NextResponse.json(
+        {
+          error:
+            "One or more products are no longer available from this store.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const productMap = new Map(
+      products.map((product) => [
+        product.id,
+        product,
+      ])
+    );
+
+    const items = requestedItems.map(
+      (requested) => {
+        const product =
+          productMap.get(
+            requested.productId
+          );
+
+        const price = Number(
+          product.discountPrice ??
+            product.sellingPrice
+        );
+
+        return {
+          productId: product.id,
+          name: product.name,
+          unit: null,
+          price,
+          quantity: requested.quantity,
+        };
+      }
+    );
+
+    const total = items.reduce(
+      (sum, item) =>
+        sum +
+        item.price * item.quantity,
+      0
+    );
+
+    const order =
+      await db.customerOrder.create({
+        data: {
+          customerId: customer.id,
+          shopId,
+          total,
+
+          note: body.note
+            ? String(body.note).slice(
+                0,
+                1000
+              )
+            : null,
+
+          wilaya: customer.wilaya,
+          city: customer.city,
+          address: customer.address,
+
+          items: {
+            create: items,
+          },
+        },
+
+        include: {
+          items: true,
+        },
+      });
+
+    return NextResponse.json(
+      { order },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error("customer order", error);
-    return NextResponse.json({ error: "Unable to place order" }, { status: 500 });
+    console.error(
+      "customer order",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        error:
+          "Unable to place order",
+      },
+      { status: 500 }
+    );
   }
 }

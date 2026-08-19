@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { randomBytes } from "node:crypto";
 import { isValidWilaya } from "@/lib/wilayas";
+import { isValidBaladia } from "@/lib/locations";
 
 export async function POST(req: Request) {
   try {
@@ -14,7 +15,6 @@ export async function POST(req: Request) {
     const password = String(body.password || "");
     const storeName = String(body.storeName || "").trim();
 
-    // Location
     const wilaya = String(body.wilaya || "").trim();
     const city = String(body.city || "").trim();
 
@@ -36,7 +36,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Validate Wilaya
     if (!isValidWilaya(wilaya)) {
       return NextResponse.json(
         { error: "Invalid wilaya." },
@@ -44,10 +43,24 @@ export async function POST(req: Request) {
       );
     }
 
-    // Validate Baladia
-    if (city.length < 2 || city.length > 100) {
+    if (!isValidBaladia(wilaya, city)) {
       return NextResponse.json(
-        { error: "Invalid baladia." },
+        {
+          error:
+            "The selected baladia does not belong to the selected wilaya.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (
+      name.length > 100 ||
+      storeName.length > 150 ||
+      email.length > 150 ||
+      phone.length > 30
+    ) {
+      return NextResponse.json(
+        { error: "One or more fields are too long." },
         { status: 400 }
       );
     }
@@ -73,11 +86,8 @@ export async function POST(req: Request) {
         name,
         email,
         phone,
-
-        // Seller's location
         wilaya,
         city,
-
         password: await hashPassword(password),
         role: "SELLER",
 
@@ -96,7 +106,6 @@ export async function POST(req: Request) {
       },
     });
 
-    // Email verification token
     const token = randomBytes(32).toString("hex");
 
     await db.verificationToken.create({
@@ -108,7 +117,8 @@ export async function POST(req: Request) {
     });
 
     const verificationUrl = `${
-      process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin
+      process.env.NEXT_PUBLIC_APP_URL ||
+      new URL(req.url).origin
     }/api/seller/verify-email?token=${token}`;
 
     return NextResponse.json(
@@ -122,6 +132,7 @@ export async function POST(req: Request) {
           phone: user.phone,
           wilaya: user.wilaya,
           city: user.city,
+
           store: user.store
             ? {
                 id: user.store.id,

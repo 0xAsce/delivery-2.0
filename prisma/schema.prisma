@@ -42,7 +42,12 @@ model User {
   customerSessions CustomerSession[]
   customerOrders   CustomerOrder[]
 
-  store Store?
+ store Store?
+
+mainStoreId String?
+mainStore   Store? @relation("CustomerMainStore", fields: [mainStoreId], references: [id], onDelete: SetNull)
+
+@@index([mainStoreId])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -130,6 +135,8 @@ model Store {
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
+
+  mainCustomers User[] @relation("CustomerMainStore")
 
   products Product[]
 

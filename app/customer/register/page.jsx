@@ -1,69 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-const WILAYAS = [
-  "Adrar",
-  "Chlef",
-  "Laghouat",
-  "Oum El Bouaghi",
-  "Batna",
-  "Béjaïa",
-  "Biskra",
-  "Béchar",
-  "Blida",
-  "Bouira",
-  "Tamanrasset",
-  "Tébessa",
-  "Tlemcen",
-  "Tiaret",
-  "Tizi Ouzou",
-  "Alger",
-  "Djelfa",
-  "Jijel",
-  "Sétif",
-  "Saïda",
-  "Skikda",
-  "Sidi Bel Abbès",
-  "Annaba",
-  "Guelma",
-  "Constantine",
-  "Médéa",
-  "Mostaganem",
-  "M'Sila",
-  "Mascara",
-  "Ouargla",
-  "Oran",
-  "El Bayadh",
-  "Illizi",
-  "Bordj Bou Arréridj",
-  "Boumerdès",
-  "El Tarf",
-  "Tindouf",
-  "Tissemsilt",
-  "El Oued",
-  "Khenchela",
-  "Souk Ahras",
-  "Tipaza",
-  "Mila",
-  "Aïn Defla",
-  "Naâma",
-  "Aïn Témouchent",
-  "Ghardaïa",
-  "Relizane",
-  "Timimoun",
-  "Bordj Badji Mokhtar",
-  "Ouled Djellal",
-  "Béni Abbès",
-  "In Salah",
-  "In Guezzam",
-  "Touggourt",
-  "Djanet",
-  "El M'Ghair",
-  "El Meniaa",
-];
 
 export default function CustomerRegister() {
   const router = useRouter();
@@ -78,14 +17,85 @@ export default function CustomerRegister() {
     address: "",
   });
 
+  const [wilayas, setWilayas] = useState([]);
+  const [baladias, setBaladias] = useState([]);
+
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loadingWilayas, setLoadingWilayas] = useState(true);
+  const [loadingBaladias, setLoadingBaladias] = useState(false);
+
+  useEffect(() => {
+    async function loadWilayas() {
+      try {
+        const response = await fetch("/api/locations");
+
+        if (!response.ok) {
+          throw new Error("Unable to load wilayas");
+        }
+
+        const data = await response.json();
+
+        setWilayas(data.wilayas || []);
+      } catch (error) {
+        console.error(error);
+        setError("Unable to load wilayas.");
+      } finally {
+        setLoadingWilayas(false);
+      }
+    }
+
+    loadWilayas();
+  }, []);
+
+  useEffect(() => {
+    if (!form.wilaya) {
+      setBaladias([]);
+      return;
+    }
+
+    async function loadBaladias() {
+      setLoadingBaladias(true);
+
+      try {
+        const response = await fetch(
+          `/api/locations?wilaya=${encodeURIComponent(form.wilaya)}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Unable to load baladias");
+        }
+
+        const data = await response.json();
+
+        setBaladias(data.baladias || []);
+      } catch (error) {
+        console.error(error);
+        setBaladias([]);
+        setError("Unable to load baladias.");
+      } finally {
+        setLoadingBaladias(false);
+      }
+    }
+
+    loadBaladias();
+  }, [form.wilaya]);
 
   function updateField(field, value) {
     setForm((current) => ({
       ...current,
       [field]: value,
     }));
+  }
+
+  function handleWilayaChange(value) {
+    setForm((current) => ({
+      ...current,
+      wilaya: value,
+      city: "",
+    }));
+
+    setError("");
   }
 
   async function submit(e) {
@@ -107,42 +117,51 @@ export default function CustomerRegister() {
       return;
     }
 
-    if (form.city.trim().length < 2) {
-      setError("Please enter your city.");
+    if (!form.city) {
+      setError("Please select your baladia.");
       return;
     }
 
     setBusy(true);
 
     try {
-      const response = await fetch("/api/customer/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: form.name.trim(),
-          phone: form.phone.trim(),
-          password: form.password,
-          wilaya: form.wilaya,
-          city: form.city.trim(),
-          address: form.address.trim(),
-        }),
-      });
+      const response = await fetch(
+        "/api/customer/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: form.name.trim(),
+            phone: form.phone.trim(),
+            password: form.password,
+            wilaya: form.wilaya,
+            city: form.city,
+            address: form.address.trim(),
+          }),
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
         setError(
-          data?.error || "Unable to create your account."
+          data?.error ||
+            "Unable to create your account."
         );
         return;
       }
 
-      // Registration automatically creates the customer session.
-      router.replace("/customer/profile");
-    } catch (err) {
-      console.error(err);
+      /*
+       * Registration creates the customer session.
+       *
+       * Send the customer to the seller-selection page
+       * instead of directly to the profile.
+       */
+      router.replace("/stores");
+    } catch (error) {
+      console.error(error);
       setError("Unable to connect to the server.");
     } finally {
       setBusy(false);
@@ -161,7 +180,7 @@ export default function CustomerRegister() {
           </h1>
 
           <p className="text-gray-500 mt-1">
-            Register with your phone number and delivery information.
+            Register with your phone number and location.
           </p>
         </div>
 
@@ -217,7 +236,10 @@ export default function CustomerRegister() {
               type="password"
               value={form.password}
               onChange={(e) =>
-                updateField("password", e.target.value)
+                updateField(
+                  "password",
+                  e.target.value
+                )
               }
               placeholder="At least 8 characters"
               minLength={8}
@@ -259,15 +281,23 @@ export default function CustomerRegister() {
               required
               value={form.wilaya}
               onChange={(e) =>
-                updateField("wilaya", e.target.value)
+                handleWilayaChange(e.target.value)
               }
+              disabled={loadingWilayas}
               className="w-full rounded-xl border border-gray-300 p-3 bg-white outline-none focus:ring-2 focus:ring-black"
             >
-              <option value="">Select wilaya</option>
+              <option value="">
+                {loadingWilayas
+                  ? "Loading..."
+                  : "Select wilaya"}
+              </option>
 
-              {WILAYAS.map((wilaya) => (
-                <option key={wilaya} value={wilaya}>
-                  {wilaya}
+              {wilayas.map((wilaya) => (
+                <option
+                  key={wilaya.code}
+                  value={wilaya.name}
+                >
+                  {wilaya.name}
                 </option>
               ))}
             </select>
@@ -275,19 +305,37 @@ export default function CustomerRegister() {
 
           <div>
             <label className="block text-sm font-bold mb-1">
-              City
+              Baladia
             </label>
 
-            <input
+            <select
               required
               value={form.city}
               onChange={(e) =>
                 updateField("city", e.target.value)
               }
-              placeholder="Your city"
-              maxLength={100}
-              className="w-full rounded-xl border border-gray-300 p-3 outline-none focus:ring-2 focus:ring-black"
-            />
+              disabled={
+                !form.wilaya || loadingBaladias
+              }
+              className="w-full rounded-xl border border-gray-300 p-3 bg-white outline-none focus:ring-2 focus:ring-black"
+            >
+              <option value="">
+                {!form.wilaya
+                  ? "Select wilaya first"
+                  : loadingBaladias
+                  ? "Loading..."
+                  : "Select baladia"}
+              </option>
+
+              {baladias.map((baladia) => (
+                <option
+                  key={baladia}
+                  value={baladia}
+                >
+                  {baladia}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -316,7 +364,9 @@ export default function CustomerRegister() {
           disabled={busy}
           className="w-full rounded-xl bg-black text-white p-3 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {busy ? "Creating account…" : "Create account"}
+          {busy
+            ? "Creating account…"
+            : "Create account"}
         </button>
 
         <p className="text-sm text-center text-gray-600">
