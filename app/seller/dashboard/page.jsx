@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
 const translations = {
   ar: {
     dashboard: "لوحة تحكم البائع",
@@ -831,6 +830,44 @@ export default function SellerDashboard() {
       </header>
 
       <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
+        {/* SELLER NAVIGATION */}
+        <nav
+          dir={language === "ar" ? "rtl" : "ltr"}
+          className="rounded-2xl border bg-white p-3 shadow-sm"
+        >
+          <div className="flex flex-wrap gap-2">
+            <a
+              href="/seller/dashboard"
+              className="flex items-center gap-2 rounded-xl border px-4 py-3 font-bold transition hover:bg-gray-100"
+            >
+              <span>🏠</span>
+              <span>
+                {language === "ar" ? "الرئيسية" : "Dashboard"}
+              </span>
+            </a>
+
+            <a
+              href="/seller/products"
+              className="flex items-center gap-2 rounded-xl border px-4 py-3 font-bold transition hover:bg-gray-100"
+            >
+              <span>📦</span>
+              <span>
+                {language === "ar" ? "المنتجات" : "Products"}
+              </span>
+            </a>
+
+            <a
+              href="/seller/orders"
+              className="flex items-center gap-2 rounded-xl border px-4 py-3 font-bold transition hover:bg-gray-100"
+            >
+              <span>🛒</span>
+              <span>
+                {language === "ar" ? "الطلبات" : "Orders"}
+              </span>
+            </a>
+          </div>
+        </nav>
+
         {/* ERRORS */}
 
         {error && (
