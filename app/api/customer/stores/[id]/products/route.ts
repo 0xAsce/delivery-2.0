@@ -32,38 +32,36 @@ export async function GET(
         },
       },
 
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        logo: true,
-        banner: true,
-        phone: true,
-        wilaya: true,
-        user: {
-          select: {
-            name: true,
-            wilaya: true,
-            city: true,
-          },
-        },
+    select: {
+  id: true,
+  name: true,
+  description: true,
+  logo: true,
+  banner: true,
+  phone: true,
 
-        products: {
-          where: {
-            isHidden: false,
-          },
+  user: {
+    select: {
+      name: true,
+      wilaya: true,
+      city: true,
+    },
+  },
 
-          include: {
-            images: {
-  take: 1,
-},
-          },
-
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
+  products: {
+    where: {
+      isHidden: false,
+    },
+    include: {
+      images: {
+        take: 1,
       },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  },
+},,
     });
 
     if (!store) {

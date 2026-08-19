@@ -1,40 +1,40 @@
 {
   "pages": {
-    "/api/seller/logout/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/seller/logout/route.js"
-    ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/customer/profile/page": [
+    "/seller/dashboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/customer/profile/page.js"
-    ],
-    "/seller/login/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/seller/login/page.js"
-    ],
-    "/api/customer/me/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/customer/me/route.js"
-    ],
-    "/api/customer/logout/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/customer/logout/route.js"
+      "static/chunks/app/seller/dashboard/page.js"
     ],
     "/customer/login/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/customer/login/page.js"
+    ],
+    "/customer/profile/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/customer/profile/page.js"
+    ],
+    "/stores/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/stores/page.js"
+    ],
+    "/api/customer/stores/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/customer/stores/route.js"
+    ],
+    "/api/customer/me/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/customer/me/route.js"
     ],
     "/customer/register/page": [
       "static/chunks/webpack.js",
@@ -51,15 +51,45 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/customer/register/route.js"
     ],
-    "/stores/page": [
+    "/customer/select-seller/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/stores/page.js"
+      "static/chunks/app/customer/select-seller/page.js"
     ],
-    "/api/customer/stores/route": [
+    "/api/customer/main-seller/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/customer/stores/route.js"
+      "static/chunks/app/api/customer/main-seller/route.js"
+    ],
+    "/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/page.js"
+    ],
+    "/api/customer/orders/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/customer/orders/route.js"
+    ],
+    "/api/customer/main-seller/products/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/customer/main-seller/products/route.js"
+    ],
+    "/api/seller/me/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/seller/me/route.js"
+    ],
+    "/seller/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/seller/login/page.js"
+    ],
+    "/api/seller/login/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/seller/login/route.js"
     ],
     "/_not-found/page": [
       "static/chunks/webpack.js",

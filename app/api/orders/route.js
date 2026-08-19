@@ -15,32 +15,34 @@ export async function POST(request) {
   try {
     const body = await request.json();
 
-    if (!body.shopId) {
-      return NextResponse.json(
-        { error: "A store must be selected." },
-        { status: 400 }
-      );
-    }
-
-    if (
-      !Array.isArray(body?.items) ||
-      !body.items.length
-    ) {
+    if (!Array.isArray(body?.items) || !body.items.length) {
       return NextResponse.json(
         { error: "items are required" },
         { status: 400 }
       );
     }
 
-    const shopId = String(body.shopId);
+    /*
+     * IMPORTANT:
+     * Never trust shopId sent by the browser.
+     * The customer's main seller is stored on their account.
+     */
+    if (!customer.mainStoreId) {
+      return NextResponse.json(
+        {
+          error:
+            "Please select your main seller before placing an order.",
+        },
+        { status: 400 }
+      );
+    }
 
-    // Make sure the customer can actually order
-    // from this store.
+    const shopId = customer.mainStoreId;
+
     const store = await db.store.findFirst({
       where: {
         id: shopId,
         status: "OPEN",
-
         user: {
           role: "SELLER",
           wilaya: customer.wilaya,
@@ -53,32 +55,23 @@ export async function POST(request) {
       return NextResponse.json(
         {
           error:
-            "This store is not available in your area.",
+            "Your main seller is no longer available in your area.",
         },
         { status: 400 }
       );
     }
 
-    const requestedItems = body.items.map(
-      (item) => ({
-        productId: item.id
-          ? String(item.id)
-          : null,
-
-        quantity: Math.max(
-          1,
-          Number(
-            item.qty || item.quantity
-          ) || 0
-        ),
-      })
-    );
+    const requestedItems = body.items.map((item) => ({
+      productId: item.id ? String(item.id) : null,
+      quantity: Math.max(
+        1,
+        Number(item.qty || item.quantity) || 0
+      ),
+    }));
 
     if (
       requestedItems.some(
-        (item) =>
-          !item.productId ||
-          item.quantity < 1
+        (item) => !item.productId || item.quantity < 1
       )
     ) {
       return NextResponse.json(
@@ -87,32 +80,27 @@ export async function POST(request) {
       );
     }
 
-    const productIds =
-      requestedItems.map(
-        (item) => item.productId
-      );
+    const productIds = requestedItems.map(
+      (item) => item.productId
+    );
 
-    const products =
-      await db.product.findMany({
-        where: {
-          id: {
-            in: productIds,
-          },
-
-          storeId: shopId,
-
-          isHidden: false,
+    const products = await db.product.findMany({
+      where: {
+        id: {
+          in: productIds,
         },
-
-        include: {
-          images: {
-            orderBy: {
-              sortOrder: "asc",
-            },
-            take: 1,
+        storeId: shopId,
+        isHidden: false,
+      },
+      include: {
+        images: {
+          orderBy: {
+            position: "asc",
           },
+          take: 1,
         },
-      });
+      },
+    });
 
     if (products.length !== productIds.length) {
       return NextResponse.json(
@@ -131,77 +119,69 @@ export async function POST(request) {
       ])
     );
 
-    const items = requestedItems.map(
-      (requested) => {
-        const product =
-          productMap.get(
-            requested.productId
-          );
+    const items = requestedItems.map((requested) => {
+      const product = productMap.get(
+        requested.productId
+      );
 
-        const price = Number(
-          product.discountPrice ??
-            product.sellingPrice
-        );
+      const price = Number(
+        product.discountPrice ??
+          product.sellingPrice
+      );
 
-        return {
-          productId: product.id,
-          name: product.name,
-          unit: null,
-          price,
-          quantity: requested.quantity,
-        };
-      }
-    );
+      return {
+        productId: product.id,
+        name: product.name,
+        unit: null,
+        price,
+        quantity: requested.quantity,
+      };
+    });
 
     const total = items.reduce(
       (sum, item) =>
-        sum +
-        item.price * item.quantity,
+        sum + item.price * item.quantity,
       0
     );
 
-    const order =
-      await db.customerOrder.create({
-        data: {
-          customerId: customer.id,
-          shopId,
-          total,
+    const order = await db.customerOrder.create({
+      data: {
+        customerId: customer.id,
+        shopId,
+        total,
 
-          note: body.note
-            ? String(body.note).slice(
-                0,
-                1000
-              )
-            : null,
+        note: body.note
+          ? String(body.note).slice(0, 1000)
+          : null,
 
-          wilaya: customer.wilaya,
-          city: customer.city,
-          address: customer.address,
+        wilaya: customer.wilaya,
+        city: customer.city,
+        address: customer.address,
 
-          items: {
-            create: items,
-          },
+        deliveryMethod: body.deliveryMethod
+          ? String(body.deliveryMethod)
+          : null,
+
+        items: {
+          create: items,
         },
+      },
 
-        include: {
-          items: true,
-        },
-      });
+      include: {
+        items: true,
+      },
+    });
 
     return NextResponse.json(
       { order },
       { status: 201 }
     );
   } catch (error) {
-    console.error(
-      "customer order",
-      error
-    );
+    console.error("customer order", error);
 
     return NextResponse.json(
       {
-        error:
-          "Unable to place order",
+        error: "Unable to place order",
       },
       { status: 500 }
     );

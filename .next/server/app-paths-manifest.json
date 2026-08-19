@@ -1,13 +1,14 @@
 {
   "/api/customer/me/route": "app/api/customer/me/route.js",
-  "/api/customer/logout/route": "app/api/customer/logout/route.js",
-  "/api/locations/route": "app/api/locations/route.js",
-  "/api/customer/register/route": "app/api/customer/register/route.js",
-  "/api/customer/stores/route": "app/api/customer/stores/route.js",
+  "/api/customer/main-seller/route": "app/api/customer/main-seller/route.js",
+  "/api/customer/orders/route": "app/api/customer/orders/route.js",
+  "/api/customer/main-seller/products/route": "app/api/customer/main-seller/products/route.js",
+  "/api/seller/me/route": "app/api/seller/me/route.js",
+  "/api/seller/login/route": "app/api/seller/login/route.js",
   "/_not-found/page": "app/_not-found/page.js",
-  "/customer/profile/page": "app/customer/profile/page.js",
-  "/seller/login/page": "app/seller/login/page.js",
-  "/customer/login/page": "app/customer/login/page.js",
+  "/seller/dashboard/page": "app/seller/dashboard/page.js",
   "/customer/register/page": "app/customer/register/page.js",
-  "/stores/page": "app/stores/page.js"
+  "/customer/select-seller/page": "app/customer/select-seller/page.js",
+  "/page": "app/page.js",
+  "/seller/login/page": "app/seller/login/page.js"
 }

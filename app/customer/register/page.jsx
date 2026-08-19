@@ -159,7 +159,7 @@ export default function CustomerRegister() {
        * Send the customer to the seller-selection page
        * instead of directly to the profile.
        */
-      router.replace("/stores");
+      router.replace("/customer/select-seller");
     } catch (error) {
       console.error(error);
       setError("Unable to connect to the server.");

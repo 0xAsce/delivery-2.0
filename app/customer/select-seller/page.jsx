@@ -33,10 +33,7 @@ export default function SelectSellerPage() {
           return;
         }
 
-        if (data.mainStore) {
-          router.replace("/");
-          return;
-        }
+        
 
         setStores(data.stores || []);
         setLocation(data.location || null);
